@@ -6,11 +6,9 @@ from fastapi.responses import FileResponse
 from fastapi.middleware.cors import CORSMiddleware
 import shutil
 
-#si je rentre
-
 app=FastAPI()
 
-link_site=''
+link_site='http://147.79.101.206/#'
 
 app.add_middleware(
     CORSMiddleware,
@@ -20,43 +18,33 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-@app.get('/hello')
-def root():
-    return {"Hello": "Worlddddd"}
 
-
-
-@app.get("/api/download")
 def download_zip():
-    output_dir = "output"
+    output_dir = "output_dir"
     zip_filename = "output.zip"
 
-    # Supprimer le zip s'il existe déjà
     if os.path.exists(zip_filename):
         os.remove(zip_filename)
 
-    # Créer un fichier zip depuis le dossier output/
     shutil.make_archive("output", "zip", output_dir)
 
-    # Envoyer le zip comme fichier à télécharger
     return FileResponse(
         path=zip_filename,
         media_type="application/zip",
-        filename="mes_mp3.zip"
+        filename="output_mp3.zip"
     )
 
 
+@app.get('/convert')
+def convert_playlist_to_mp3(link_playlist :str):
 
-
-def convert_playlist_to_mp3(link_playlist):
-
-    print('création fichier...')
     output_dir='output_dir'
+    print('création fichier...')
     os.makedirs(output_dir, exist_ok=True)
 
     cmd = (
         'yt-dlp '
-        '--cookies cookies_yt.txt '
+        '--cookies cookies.txt '
         '-i ' 
         '-f bestaudio/best '
         '-x --audio-format mp3 --audio-quality 0 ' 
@@ -69,12 +57,17 @@ def convert_playlist_to_mp3(link_playlist):
 
     print("Exécution :", cmd)
     subprocess.run(shlex.split(cmd), check=False)
-
     print('convertion terminé !')
+
+    print("conversion en zip...")
+    res=download_zip()
+    print("conversion terminée...")
+
+    return res
 
 if __name__ == "__main__":
 
     url='https://youtube.com/playlist?list=PL_DW1oF5je4ybgpmpck2DRds_l9w5OyQv&si=WkR_-e8JETiEZKjP'
     convert_playlist_to_mp3(url)
-
+    # print('hello world')
 
