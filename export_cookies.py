@@ -39,6 +39,12 @@ from selenium.webdriver.chrome.options import Options
 import chromedriver_autoinstaller
 from selenium.webdriver.common.by import By
 import pickle
+import json
+
+# from selnet_cookies import save_cookies_to_file
+from netscape_cookies import to_netscape_string
+
+from check_cookies_valid import validate_netscape_cookie_file
 
 
 # setup chrome options
@@ -52,7 +58,7 @@ chromedriver_autoinstaller.install()
 
 print('v1')
 # set the target URL
-url = 'https://www.leagueofgraphs.com/champions/tier-list/samira'
+url = 'https://www.youtube.com/'
 
 # set up the webdriver
 driver = webdriver.Chrome(options=chrome_options)
@@ -63,8 +69,30 @@ driver.get(url)
 
 print("driver.title",driver.title)
 # print(driver.get_cookies())
-print(driver.get_cookies())
+cookies = driver.get_cookies()
 
-pickle.dump( driver.get_cookies() , open("cookies.pkl","wb"))
+
+print('COOKIES---------------------------')
+res=to_netscape_string(cookies)
+
+with open("cookies.txt", "w") as f:
+    f.write("# Netscape HTTP Cookie File\n")
+    f.write("# http://curl.haxx.se/rfc/cookie_spec.html\n")
+    f.write("# This is a generated file!  Do not edit.\n")
+    f.write(str(res))
+# print(len(driver.get_cookies()))
+
+# Sauvegarde au format texte simple
+# with open("cookies.txt", "w") as f:
+#     for cookie in cookies:
+#         f.write(f"{cookie['name']}={cookie['value']}; ")
+
+# Sauvegarde au format JSON
+with open("cookies.json", "w") as f_json:
+    json.dump(cookies, f_json, indent=4)
+
+validate_netscape_cookie_file('cookies.txt')
+
+
 driver.quit()
 
