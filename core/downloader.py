@@ -31,11 +31,9 @@ def download_playlist(url: str, output_dir: str):
             {'key': 'FFmpegMetadata'},
             {'key': 'EmbedThumbnail'},
         ],
-        'cookiefile': get_cookiefile(),
         'ffmpeg_location': FFMPEG_PATH,
         'outtmpl': os.path.join(output_dir, '%(playlist_index)s - %(title)s.%(ext)s'),
         'ignoreerrors': True,
-        'writethumbnail': True,
     }
     with yt_dlp.YoutubeDL(opts) as ydl:
         ydl.download([url])
