@@ -45,7 +45,7 @@ import time
 # from selnet_cookies import save_cookies_to_file
 from netscape_cookies import to_netscape_string
 
-from check_cookies_valid import validate_netscape_cookie_file
+from research.check_cookies_valid import validate_netscape_cookie_file
 
 
 # setup chrome options

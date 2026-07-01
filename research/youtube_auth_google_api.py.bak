@@ -1,0 +1,64 @@
+import os
+from pathlib import Path
+
+from google.auth.transport.requests import Request
+from google.oauth2.credentials import Credentials
+from google_auth_oauthlib.flow import InstalledAppFlow
+from googleapiclient.discovery import build
+
+_APP_DIR = Path(os.environ.get('LOCALAPPDATA', Path.home())) / 'convert-music'
+_TOKEN_FILE = str(_APP_DIR / 'token.json')
+_SCOPES = ['https://www.googleapis.com/auth/youtube.readonly']
+CLIENT_SECRETS_FILE = 'client_secrets.json'
+
+
+def _get_credentials() -> Credentials:
+    creds = None
+
+    if Path(_TOKEN_FILE).exists():
+        creds = Credentials.from_authorized_user_file(_TOKEN_FILE, _SCOPES)
+
+    if not creds or not creds.valid:
+        if creds and creds.expired and creds.refresh_token:
+            creds.refresh(Request())
+        else:
+            flow = InstalledAppFlow.from_client_secrets_file(CLIENT_SECRETS_FILE, _SCOPES)
+            creds = flow.run_local_server(port=0)
+
+        with open(_TOKEN_FILE, 'w') as f:
+            f.write(creds.to_json())
+
+    return creds
+
+
+def get_user_playlists() -> list[dict]:
+    youtube = build('youtube', 'v3', credentials=_get_credentials())
+
+    playlists = []
+    next_page_token = None
+
+    while True:
+        response = youtube.playlists().list(
+            part='snippet,contentDetails',
+            mine=True,
+            maxResults=50,
+            pageToken=next_page_token,
+        ).execute()
+
+        for item in response['items']:
+            playlists.append({
+                'title': item['snippet']['title'],
+                'url': f"https://youtube.com/playlist?list={item['id']}",
+                'count': item['contentDetails']['itemCount'],
+            })
+
+        next_page_token = response.get('nextPageToken')
+        if not next_page_token:
+            break
+
+    return playlists
+
+
+if __name__ == '__main__':
+    for p in get_user_playlists():
+        print(f"{p['title']} ({p['count']} vidéos) — {p['url']}")
