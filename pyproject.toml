@@ -1,0 +1,14 @@
+[project]
+name = "convert-music"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "google-api-python-client>=2.198.0",
+    "google-auth-oauthlib>=1.4.0",
+    "imageio-ffmpeg>=0.6.0",
+    "pywin32>=312",
+    "undetected-chromedriver>=3.5.5",
+    "yt-dlp>=2026.6.9",
+]
