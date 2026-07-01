@@ -2,7 +2,7 @@ import os
 import sys
 import threading
 import tkinter as tk
-from tkinter import filedialog, messagebox
+from tkinter import filedialog, messagebox, ttk
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
@@ -15,7 +15,7 @@ class App(tk.Tk):
     def __init__(self):
         super().__init__()
         self.title('Convert Music')
-        self.geometry('500x420')
+        self.geometry('500x450')
         self.resizable(False, False)
 
         self._playlists = []
@@ -50,6 +50,9 @@ class App(tk.Tk):
         )
         self._download_btn.pack(fill='x', padx=20, pady=4)
 
+        self._progress = ttk.Progressbar(self, mode='determinate')
+        self._progress.pack(fill='x', padx=20, pady=2)
+
         self._status = tk.Label(self, text='', fg='gray')
         self._status.pack(pady=4)
 
@@ -60,12 +63,23 @@ class App(tk.Tk):
 
     def _fetch_playlists(self):
         try:
-            export_cookies()
+            def _wait():
+                event = threading.Event()
+                def show_dialog():
+                    messagebox.showinfo(
+                        'Connexion requise',
+                        'Connectez-vous à YouTube dans la fenêtre Chrome qui vient de s\'ouvrir, puis cliquez OK.'
+                    )
+                    event.set()
+                self.after(0, show_dialog)
+                event.wait()
+            export_cookies(wait_fn=_wait)
             self._playlists = get_user_playlists()
             self.after(0, self._populate_listbox)
 
         except Exception as e:
-            self.after(0, lambda: self._status.config(text=f'Erreur : {e}'))
+            err = str(e)
+            self.after(0, lambda: self._status.config(text=f'Erreur : {err}'))
 
     def _populate_listbox(self):
         self._listbox.delete(0, 'end')
@@ -87,13 +101,22 @@ class App(tk.Tk):
             return
 
         playlist = self._playlists[selection[0]]
+        total = playlist.get('count', 0)
+
         self._download_btn.config(state='disabled')
-        self._status.config(text=f'Téléchargement de "{playlist["title"]}"...')
+        self._progress.config(maximum=total, value=0)
+        self._status.config(text=f'0 / {total} vidéos')
+
+        def on_progress(done):
+            self.after(0, lambda: self._progress.config(value=done))
+            self.after(0, lambda: self._status.config(text=f'{done} / {total} vidéos'))
 
         def _run_download():
-            download_playlist(playlist['url'], self._output_dir)
+            download_playlist(playlist['url'], self._output_dir, on_progress=on_progress)
             self.after(0, lambda: self._download_btn.config(state='normal'))
+            self.after(0, lambda: self._progress.config(value=total))
             self.after(0, lambda: self._status.config(text='Terminé !'))
+
         threading.Thread(target=_run_download, daemon=True).start()
 
 

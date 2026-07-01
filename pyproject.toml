@@ -8,6 +8,7 @@ dependencies = [
     "google-api-python-client>=2.198.0",
     "google-auth-oauthlib>=1.4.0",
     "imageio-ffmpeg>=0.6.0",
+    "pyinstaller>=6.21.0",
     "pywin32>=312",
     "undetected-chromedriver>=3.5.5",
     "yt-dlp>=2026.6.9",

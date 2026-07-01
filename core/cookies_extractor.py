@@ -65,7 +65,10 @@ def get_cookiefile() -> str:
     return COOKIES_TMP
 
 
-def export_cookies():
+def export_cookies(wait_fn=None):
+    if wait_fn is None:
+        wait_fn = lambda: input('Connectez-vous à YouTube, puis appuyez sur Entrée ici... ')
+
     if Path(COOKIES_DAT).exists():
         return
 
@@ -80,16 +83,16 @@ def export_cookies():
     except Exception:
         pass
 
-    print('Connexion YouTube requise. Ouverture de Chrome...')
     driver = _build_driver(headless=False)
     driver.get('https://accounts.google.com/ServiceLogin?service=youtube')
-    print('⚠ Ne fermez PAS la fenêtre Chrome.')
-    input('Connectez-vous à YouTube, puis appuyez sur Entrée ici... ')
+    wait_fn()
     try:
+        driver.get(YOUTUBE_URL)
+        time.sleep(3)
         cookies = driver.get_cookies()
         driver.quit()
     except Exception:
-        raise RuntimeError('La fenêtre Chrome a été fermée avant la récupération des cookies. Relancez le script.')
+        raise RuntimeError('La fenêtre Chrome a été fermée avant la récupération des cookies. Relancez.')
     _save_cookies(cookies)
 
 

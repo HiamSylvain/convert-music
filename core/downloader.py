@@ -22,8 +22,16 @@ def get_playlist_info(url: str) -> dict:
     }
 
 
-def download_playlist(url: str, output_dir: str):
+def download_playlist(url: str, output_dir: str, on_progress=None):
     os.makedirs(output_dir, exist_ok=True)
+
+    counter = {'done': 0}
+
+    def _hook(d):
+        if d['status'] == 'finished' and on_progress:
+            counter['done'] += 1
+            on_progress(counter['done'])
+
     opts = {
         'format': 'bestaudio/best',
         'postprocessors': [
@@ -34,6 +42,7 @@ def download_playlist(url: str, output_dir: str):
         'ffmpeg_location': FFMPEG_PATH,
         'outtmpl': os.path.join(output_dir, '%(playlist_index)s - %(title)s.%(ext)s'),
         'ignoreerrors': True,
+        'progress_hooks': [_hook],
     }
     with yt_dlp.YoutubeDL(opts) as ydl:
         ydl.download([url])
